@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Chicken Hunt</title>
+  <meta name="description" content="The official coop of the birthday Chicken Hunt 🐓" />
+  <meta name="theme-color" content="#c8553d" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-hen" aria-hidden="true">🐓</span> Chicken Hunt</div>
+    <div class="timer-pill" id="timerPill">🪺 waiting…</div>
+  </header>
+  <div class="fence" aria-hidden="true"></div>
+
+  <div id="demoRibbon" class="demo-ribbon" hidden>
+    🧪 Demo mode: data is only saved on this device. Connect Firebase to play for real (see README).
+  </div>
+
+  <main>
+    <div id="statusBanner" class="banner"></div>
+
+    <!-- ─────────── MY TEAM ─────────── -->
+    <section class="view" data-view="team">
+      <!-- No team yet -->
+      <div id="welcome" hidden>
+        <div class="card hero">
+          <div class="hero-art" aria-hidden="true">🐣</div>
+          <h1>Welcome to the coop!</h1>
+          <p>Hatch a new team or hop into one your friends already made.</p>
+        </div>
+
+        <form id="createTeamForm" class="card" autocomplete="off">
+          <h2>🥚 Hatch a new team</h2>
+          <label class="field">
+            <span>Team name</span>
+            <input name="name" maxlength="40" required placeholder="e.g. The Egg-cellent Detectives" />
+          </label>
+          <div class="field">
+            <span>Pick a mascot</span>
+            <div class="emoji-grid" id="createEmojiGrid"></div>
+          </div>
+          <div class="field">
+            <span>Flock members</span>
+            <div class="members-editor" id="createMembers"></div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">🐣 Hatch our team</button>
+        </form>
+
+        <div class="card">
+          <h2>🏡 …or join a team</h2>
+          <ul class="join-list" id="joinList"></ul>
+        </div>
+      </div>
+
+      <!-- Has a team -->
+      <div id="myTeam" hidden>
+        <div class="card team-card" id="teamHeader"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>🍺 Our bar crawl</h2>
+            <span class="muted" id="barProgress"></span>
+          </div>
+          <p class="hint">Tap <b>We're here</b> at every bar you check. Remember: one drink per bar! Other teams only see how <i>many</i> bars you've done, not which.</p>
+          <ol class="bar-list" id="barList"></ol>
+          <form id="customBarForm" class="inline-form" autocomplete="off">
+            <input name="bar" maxlength="60" placeholder="Somewhere not on the list?" />
+            <button class="btn btn-small" type="submit">+ Add</button>
+          </form>
+        </div>
+
+        <div id="foundArea"></div>
+      </div>
+    </section>
+
+    <!-- ─────────── THE COOP (all teams) ─────────── -->
+    <section class="view" data-view="coop" hidden>
+      <div id="winnerCard"></div>
+      <div id="potCard"></div>
+      <div class="card">
+        <div class="card-head">
+          <h2>🏡 The Coop</h2>
+          <span class="muted" id="coopCount"></span>
+        </div>
+        <ul class="coop-list" id="coopList"></ul>
+      </div>
+    </section>
+
+    <!-- ─────────── RULES ─────────── -->
+    <section class="view" data-view="rules" hidden>
+      <div class="card rules">
+        <h2>📜 The Rules of the Roost</h2>
+        <ol class="rules-list">
+          <li><span class="r-emoji">🐔🐔</span><div>Two people are designated <b>chickens</b>.</div></li>
+          <li><span class="r-emoji">💰</span><div>The chickens hold the pot: <b>$20 per person</b>.</div></li>
+          <li><span class="r-emoji">🪺</span><div>The chickens get a head start and <b>roost at a secret bar</b> from the list.</div></li>
+          <li><span class="r-emoji">👯</span><div>Everyone else splits into pairs or small groups and goes <b>hunting</b>.</div></li>
+          <li><span class="r-emoji">🍺</span><div>Seekers <b>must have 1 drink</b> at every bar they stop into.</div></li>
+          <li><span class="r-emoji">🏆</span><div>Once the first seekers find the chickens, the <b>pot starts paying for drinks</b>. From there on it's a race to find the chickens before the pot runs out!</div></li>
+        </ol>
+        <p class="hint center">Hunt responsibly: drink water, eat snacks, and take a ride home. 🚕💛</p>
+      </div>
+      <div class="card">
+        <h2>🔔 Alerts</h2>
+        <p class="hint">Keep this page open to get a cluck 🔊 when the chickens roost and when someone finds them. Turn on alerts to also get a notification while the page is in the background.</p>
+        <button class="btn btn-block" data-action="alerts" id="alertsBtn">🔔 Turn on alerts</button>
+      </div>
+    </section>
+
+    <!-- ─────────── CHICKENS ONLY ─────────── -->
+    <section class="view" data-view="chicken" hidden>
+      <form id="chickenLock" class="card" autocomplete="off" hidden>
+        <div class="hero-art" aria-hidden="true">🐔</div>
+        <h2 class="center" id="lockTitle">Chickens only!</h2>
+        <p class="hint center" id="lockHint">Enter the chicken passcode.</p>
+        <input type="password" name="pass" id="lockInput" required placeholder="Passcode" />
+        <button class="btn btn-primary btn-block" type="submit" id="lockBtn">Enter the hen house</button>
+        <p class="error" id="lockError"></p>
+      </form>
+
+      <div id="chickenPanel" hidden>
+        <div class="card" id="roostCtl"></div>
+
+        <div class="card">
+          <h2>💰 The Pot</h2>
+          <div id="potSummary"></div>
+          <form id="potStartForm" class="inline-form" autocomplete="off">
+            <span class="prefix">$</span>
+            <input name="start" type="number" min="0" step="1" inputmode="numeric" placeholder="Pot size" />
+            <button class="btn btn-small" type="submit">Set pot</button>
+          </form>
+          <p class="hint" id="potSuggest"></p>
+          <h3>Pay for a drink</h3>
+          <div class="quick-spend">
+            <button class="btn btn-small" type="button" data-action="spend" data-amt="5">-$5</button>
+            <button class="btn btn-small" type="button" data-action="spend" data-amt="8">-$8</button>
+            <button class="btn btn-small" type="button" data-action="spend" data-amt="10">-$10</button>
+            <button class="btn btn-small" type="button" data-action="spend" data-amt="15">-$15</button>
+          </div>
+          <form id="spendForm" class="inline-form" autocomplete="off">
+            <span class="prefix">$</span>
+            <input name="amt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Amount" required />
+            <input name="note" maxlength="40" placeholder="For who / what?" />
+            <button class="btn btn-small" type="submit">Pay</button>
+          </form>
+          <ul class="spend-list" id="spendList"></ul>
+        </div>
+
+        <div class="card">
+          <h2>🗺️ Bar list</h2>
+          <p class="hint">One bar per line. Every team sees this list.</p>
+          <textarea id="barsEditor" rows="10"></textarea>
+          <button class="btn btn-block" type="button" data-action="save-bars">Save bar list</button>
+        </div>
+
+        <div class="card">
+          <h2>👀 Chicken vision</h2>
+          <p class="hint">Only chickens can see where every team has been.</p>
+          <div id="godView"></div>
+        </div>
+
+        <div class="card danger">
+          <h2>🧹 Clean the coop</h2>
+          <button class="btn btn-block" type="button" data-action="reset-hunt">Restart the hunt (keep teams)</button>
+          <button class="btn btn-block btn-danger" type="button" data-action="wipe-all">Delete everything (teams too)</button>
+          <button class="btn btn-block btn-ghost" type="button" data-action="lock">🔒 Lock chicken panel</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Sections">
+    <button data-tab="team"><span>🧺</span>My Team</button>
+    <button data-tab="coop"><span>🏡</span>The Coop</button>
+    <button data-tab="rules"><span>📜</span>Rules</button>
+    <button data-tab="chicken"><span>🐔</span>Chickens</button>
+  </nav>
+
+  <div id="modalRoot"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="feathers" aria-hidden="true"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "Chicken Hunt",
+  "short_name": "Chicken Hunt",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff6e3",
+  "theme_color": "#c8553d",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
