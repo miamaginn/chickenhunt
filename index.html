@@ -13,7 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
   <header class="topbar">
@@ -96,6 +98,25 @@
       </div>
     </section>
 
+    <!-- ─────────── MAP ─────────── -->
+    <section class="view" data-view="map" hidden>
+      <div class="card map-card">
+        <div class="card-head">
+          <h2>🗺️ The hunting grounds</h2>
+          <span class="muted" id="mapCount"></span>
+        </div>
+        <p class="hint">🍺 = not checked yet · ✅ = your team was here. Tap a pin for directions.</p>
+        <div class="map-wrap">
+          <div id="huntMap" class="map"></div>
+          <div id="mapEmpty" class="map-empty" hidden></div>
+        </div>
+        <div class="map-buttons">
+          <button class="btn btn-small" type="button" data-action="locate">📍 Where am I?</button>
+          <button class="btn btn-small" type="button" data-action="fit-map">🔍 Show all bars</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ─────────── RULES ─────────── -->
     <section class="view" data-view="rules" hidden>
       <div class="card rules">
@@ -164,6 +185,22 @@
         </div>
 
         <div class="card">
+          <div class="card-head">
+            <h2>📍 Bar pins</h2>
+            <span class="muted" id="pinCount"></span>
+          </div>
+          <p class="hint">Pick a bar, then search for it or just tap the map to drop its pin. Drag the highlighted pin to fine-tune it. Pins show up on everyone's 🗺️ Map tab.</p>
+          <select id="pinBar"></select>
+          <form id="pinSearchForm" class="inline-form" autocomplete="off">
+            <input name="q" id="pinSearch" placeholder="Search for the bar…" />
+            <button class="btn btn-small" type="submit">Search</button>
+          </form>
+          <ul class="pin-results" id="pinResults"></ul>
+          <div class="map-wrap"><div id="pinMap" class="map map-sm"></div></div>
+          <button class="btn btn-small btn-ghost" type="button" data-action="unpin" id="unpinBtn">Remove this pin</button>
+        </div>
+
+        <div class="card">
           <h2>👀 Chicken vision</h2>
           <p class="hint">Only chickens can see where every team has been.</p>
           <div id="godView"></div>
@@ -182,6 +219,7 @@
   <nav class="tabbar" aria-label="Sections">
     <button data-tab="team"><span>🧺</span>My Team</button>
     <button data-tab="coop"><span>🏡</span>The Coop</button>
+    <button data-tab="map"><span>🗺️</span>Map</button>
     <button data-tab="rules"><span>📜</span>Rules</button>
     <button data-tab="chicken"><span>🐔</span>Chickens</button>
   </nav>

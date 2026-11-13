@@ -7,8 +7,10 @@ A cute, farm-themed dashboard for a birthday **Chicken Hunt** bar crawl.
 - Each team ticks off the **bars they've checked**. Other teams only see the *number* of bars, not which ones.
 - The first team to tap **"We found the chickens!"** wins → everyone gets a 🏆 pop-up with the team and time.
   Later teams are logged as 2nd, 3rd, and so on.
+- A **🗺️ Map** of every bar: your team's checked bars turn ✅, there's a "Where am I?" button,
+  and each pin has a directions link. Free OpenStreetMap, no API key needed.
 - The chickens have a passcode-locked **🐔 Chickens** tab: start the hunt, track the **pot** as drinks are bought
-  (everyone sees how much is left), edit the bar list, see where every team has been, and fix mistakes.
+  (everyone sees how much is left), edit the bar list, drop map pins, see where every team has been, and fix mistakes.
 
 It's a plain static site (HTML/CSS/JS, no build step). Live data syncs through a free **Firebase Firestore** database.
 
@@ -27,7 +29,13 @@ While `apiKey` is empty, the site runs in **demo mode**: everything is saved onl
 
 ## 2. Put in your bars
 
-Edit `DEFAULT_BARS` in [`config.js`](config.js) with your 10 bars. The chickens can also edit the list during the game from the 🐔 tab.
+Edit `DEFAULT_BARS` in [`config.js`](config.js) with your 10 bars, and set `MAP_AREA` to your town (e.g. `"Austin, TX"`).
+The chickens can also edit the list during the game from the 🐔 tab.
+
+**Map pins:** in the 🐔 tab → *Bar pins*, pick a bar, then search for it or tap the map to drop its pin
+(it jumps to the next bar automatically). Drag the highlighted pin to fine-tune it.
+Or put coordinates straight into `config.js`:
+`{ name: "The Rusty Rooster", lat: 30.2672, lng: -97.7431 }` (in Google Maps, right-click a spot to copy its numbers).
 
 ## 3. Publish with GitHub Pages
 
@@ -59,6 +67,7 @@ To play again later, use **Restart the hunt** in the 🐔 tab, or change `GAME_I
 | File | What it is |
 | --- | --- |
 | `index.html`, `styles.css`, `app.js` | The dashboard |
+| `map.js` | Maps (Leaflet + OpenStreetMap) |
 | `store.js` | Data layer (Firestore, or local demo mode) |
 | `config.js` | **Your settings:** Firebase keys, bar list, $ per person |
 | `firestore.rules` | Database rules to paste into Firebase |

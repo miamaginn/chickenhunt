@@ -20,7 +20,10 @@ export const FIREBASE_CONFIG = {
 export const GAME_ID = "birthday-hunt";
 
 // 3) The bars the chickens might be roosting at. The chickens can also
-//    edit this list from the 🐔 Chickens tab during the game.
+//    edit this list (and drop map pins) from the 🐔 Chickens tab.
+//    Optional: add map pins here instead by writing a bar like
+//      { name: "The Rusty Rooster", lat: 30.2672, lng: -97.7431 },
+//    (In Google Maps, right-click a spot and click the numbers to copy them.)
 export const DEFAULT_BARS = [
   "Bar #1",
   "Bar #2",
@@ -34,5 +37,9 @@ export const DEFAULT_BARS = [
   "Bar #10",
 ];
 
-// 4) How much each person chips into the pot (used to suggest the pot size).
+// 4) Town or neighbourhood, added to map searches so "The Pub" finds the
+//    right one, e.g. "Austin, TX".
+export const MAP_AREA = "";
+
+// 5) How much each person chips into the pot (used to suggest the pot size).
 export const POT_PER_PERSON = 20;

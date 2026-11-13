@@ -243,7 +243,7 @@ textarea { resize: vertical; line-height: 1.4; margin-bottom: 10px; }
 /* ───── tab bar ───── */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--paper); border-top: 3px solid var(--brown);
   padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
 }
@@ -290,12 +290,56 @@ textarea { resize: vertical; line-height: 1.4; margin-bottom: 10px; }
   to { transform: translate(var(--dx), 110vh) rotate(var(--rot)); }
 }
 
+/* ───── maps ───── */
+.map-wrap { position: relative; margin-top: 10px; }
+.map {
+  height: min(62vh, 520px); border: 3px solid var(--brown); border-radius: 16px; overflow: hidden;
+  background: var(--grass-soft); z-index: 0;
+}
+.map.map-sm { height: 300px; }
+.map-empty {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px;
+  background: rgba(255, 253, 247, 0.92); border-radius: 16px; font-weight: 800; z-index: 500;
+}
+.map-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.map-pin {
+  position: relative; width: 40px; height: 40px; display: grid; place-items: center; font-size: 1.25rem;
+  background: var(--yolk); border: 3px solid var(--brown); border-radius: 50% 50% 50% 6px; transform: rotate(-45deg);
+  box-shadow: 2px 2px 0 rgba(91, 58, 41, 0.6);
+}
+.map-pin > span { transform: rotate(45deg); }
+.map-pin > b {
+  position: absolute; top: -8px; right: -8px; transform: rotate(45deg);
+  min-width: 20px; height: 20px; padding: 0 4px; border-radius: 999px; display: grid; place-items: center;
+  background: var(--paper); border: 2px solid var(--brown); font: 700 0.72rem var(--head); color: var(--brown);
+}
+.map-pin.visited { background: var(--grass-soft); }
+.map-pin.selected { background: var(--red); }
+.map-pin.me { background: var(--sky); border-radius: 50%; transform: none; }
+.map-pin.me > span { transform: none; }
+.map-pop { font-family: var(--body); font-size: 0.9rem; display: grid; gap: 4px; }
+.map-pop b { font-family: var(--head); font-size: 1rem; }
+.map-pop a { font-weight: 800; color: var(--red-dark); }
+.leaflet-container { font-family: var(--body); }
+.leaflet-popup-content-wrapper { border: 2.5px solid var(--brown); border-radius: 14px; }
+select {
+  font: inherit; font-weight: 800; color: var(--brown); width: 100%; background: #fff;
+  border: 2.5px solid var(--brown); border-radius: 14px; padding: 10px 12px;
+}
+.pin-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
+.pin-results button {
+  width: 100%; text-align: left; font: inherit; font-size: 0.85rem; color: var(--brown); cursor: pointer;
+  background: #fff; border: 2px dashed var(--brown); border-radius: 12px; padding: 8px 10px;
+}
+.pin-results .hint { margin: 0; }
+
 @media (min-width: 700px) {
-  .tabbar { left: 50%; right: auto; transform: translateX(-50%); width: 560px; bottom: 12px; border: 3px solid var(--brown); border-radius: 22px; box-shadow: var(--shadow); padding-bottom: 6px; }
+  .tabbar { left: 50%; right: auto; transform: translateX(-50%); width: 600px; bottom: 12px; border: 3px solid var(--brown); border-radius: 22px; box-shadow: var(--shadow); padding-bottom: 6px; }
 }
 @media (max-width: 380px) {
   .brand { font-size: 1.1rem; }
   .emoji-grid span { font-size: 1.35rem; }
+  .tabbar button { font-size: 0.7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

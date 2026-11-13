@@ -1,5 +1,6 @@
 import { createStore, isLive } from "./store.js";
-import { DEFAULT_BARS, POT_PER_PERSON } from "./config.js";
+import { DEFAULT_BARS, POT_PER_PERSON, MAP_AREA } from "./config.js";
+import { mapsAvailable, createHuntMap, createPinEditor, searchPlaces } from "./map.js";
 
 // ───────────────────────── helpers ─────────────────────────
 const $ = (s, el = document) => el.querySelector(s);
@@ -51,7 +52,16 @@ let myVisitsUnsub = null, myVisitsFor = null;
 const godUnsubs = new Map();
 let barsDirty = false;
 
-const bars = () => (S.game.bars?.length ? S.game.bars : DEFAULT_BARS);
+const barName = (b) => (typeof b === "string" ? b : b?.name || "");
+const bars = () => (S.game.bars?.length ? S.game.bars : DEFAULT_BARS.map(barName)).filter(Boolean);
+// Map pins: ones written in config.js, overridden by ones the chickens dropped.
+function pins() {
+  const m = new Map();
+  DEFAULT_BARS.forEach((b) => typeof b === "object" && isFinite(b.lat) && isFinite(b.lng) && m.set(b.name, { lat: +b.lat, lng: +b.lng }));
+  (S.game.barPins || []).forEach((p) => m.set(p.name, { lat: p.lat, lng: p.lng }));
+  return m;
+}
+let huntMap = null, pinMap = null, pinSel = null;
 const myTeam = () => S.teams.find((t) => t.id === S.myTeamId);
 const roosted = () => !!S.game.roostedAt;
 const chickenOk = () => !!S.game.chickenHash && LS.get("chickenHash") === S.game.chickenHash;
@@ -96,7 +106,7 @@ function syncMyVisits() {
   myVisitsUnsub = null;
   myVisitsFor = id;
   S.myVisits = [];
-  if (id) myVisitsUnsub = store.onVisits(id, (vs) => { S.myVisits = vs; renderTeam(); });
+  if (id) myVisitsUnsub = store.onVisits(id, (vs) => { S.myVisits = vs; renderTeam(); renderMap(); });
 }
 
 function syncGodVisits() {
@@ -339,12 +349,17 @@ function editTeam() {
 
 // ───────────────────────── UI events ─────────────────────────
 function setView(v) {
-  if (!["team", "coop", "rules", "chicken"].includes(v)) v = "team";
+  if (!["team", "coop", "map", "rules", "chicken"].includes(v)) v = "team";
   S.view = v;
   LS.set("view", v);
   $$(".view").forEach((s) => (s.hidden = s.dataset.view !== v));
   $$(".tabbar button").forEach((b) => b.classList.toggle("active", b.dataset.tab === v));
   window.scrollTo({ top: 0 });
+  // Leaflet needs a visible container to measure itself.
+  setTimeout(() => {
+    if (v === "map") { renderMap(); huntMap?.refresh(); }
+    if (v === "chicken") { renderPins(); pinMap?.refresh(); }
+  }, 30);
 }
 
 function bindUI() {
@@ -422,6 +437,31 @@ function bindUI() {
   });
 
   $("#barsEditor").addEventListener("input", () => (barsDirty = true));
+
+  $("#pinBar").addEventListener("change", (e) => {
+    pinSel = e.target.value;
+    $("#pinSearch").value = [pinSel, MAP_AREA].filter(Boolean).join(", ");
+    $("#pinResults").innerHTML = "";
+    const p = pins().get(pinSel);
+    if (p) pinMap?.flyTo(p.lat, p.lng);
+    renderPins();
+  });
+
+  $("#pinSearchForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("#pinSearch").value.trim();
+    if (!q) return;
+    const out = $("#pinResults");
+    out.innerHTML = `<li class="hint">Searching… 🔎</li>`;
+    try {
+      const rs = await searchPlaces(q);
+      out.innerHTML = rs.length
+        ? rs.map((r) => `<li><button type="button" data-action="pick-place" data-lat="${r.lat}" data-lng="${r.lng}">📍 ${esc(r.name)}</button></li>`).join("")
+        : `<li class="hint">Nothing found. Try adding the street or city, or just tap the map.</li>`;
+    } catch {
+      out.innerHTML = `<li class="hint">Search isn't working right now. Tap the map to drop the pin instead.</li>`;
+    }
+  });
 
   document.addEventListener("click", async (e) => {
     const el = e.target.closest("[data-action]");
@@ -515,6 +555,20 @@ function bindUI() {
           toast("Coop swept clean 🧹");
         }
         break;
+      case "locate":
+        huntMap?.locate((msg) => toast(msg));
+        break;
+      case "fit-map": huntMap?.fit(); break;
+      case "pick-place":
+        await placePin({ lat: +el.dataset.lat, lng: +el.dataset.lng });
+        pinMap?.flyTo(+el.dataset.lat, +el.dataset.lng);
+        $("#pinResults").innerHTML = "";
+        break;
+      case "unpin":
+        if (!pinSel) return;
+        await store.updateGame({ barPins: (S.game.barPins || []).filter((p) => p.name !== pinSel) });
+        toast(`Removed the pin for ${pinSel}`);
+        break;
       case "lock":
         LS.set("chickenHash", null);
         syncGodVisits();
@@ -522,6 +576,25 @@ function bindUI() {
         break;
     }
   });
+}
+
+async function placePin({ lat, lng }) {
+  if (!pinSel || !store) return toast("Pick a bar first!");
+  const round = (n) => Math.round(n * 1e6) / 1e6;
+  const name = pinSel, isNew = !pins().has(name);
+  const rest = (S.game.barPins || []).filter((p) => p.name !== name);
+  await store.updateGame({ barPins: [...rest, { name, lat: round(lat), lng: round(lng) }] });
+  toast(`📍 Pinned ${name}`);
+  // Setting up from scratch? Hop to the next bar that still needs a pin.
+  if (isNew) {
+    const pm = pins(), next = bars().find((b) => !pm.has(b) && b !== name);
+    if (next && pinSel === name) {
+      pinSel = next;
+      $("#pinSearch").value = [next, MAP_AREA].filter(Boolean).join(", ");
+      $("#pinResults").innerHTML = "";
+      renderPins();
+    }
+  }
 }
 
 async function spend(amt, note) {
@@ -538,6 +611,40 @@ function render() {
   renderTeam();
   renderCoop();
   renderChicken();
+  renderMap();
+}
+
+function renderMap() {
+  if (S.view !== "map" || !S.loaded.game) return;
+  const empty = $("#mapEmpty");
+  if (!mapsAvailable()) {
+    empty.hidden = false;
+    empty.textContent = "The map couldn't load 😿 Check your internet connection.";
+    return;
+  }
+  huntMap ||= createHuntMap($("#huntMap"));
+  const visited = new Map();
+  if (myTeam()) S.myVisits.forEach((v) => !visited.has(v.bar) && visited.set(v.bar, v));
+  const n = huntMap.update({ bars: bars(), pins: pins(), visited });
+  $("#mapCount").textContent = n ? `${n} ${n === 1 ? "bar" : "bars"} pinned` : "";
+  empty.hidden = n > 0;
+  if (!n) empty.innerHTML = "🪺<br/>No bars are pinned yet.<br/>The chickens can add pins from the 🐔 tab.";
+}
+
+function renderPins() {
+  if (S.view !== "chicken" || !chickenOk() || !mapsAvailable()) return;
+  const list = bars(), pm = pins();
+  if (!pinSel || !list.includes(pinSel)) {
+    pinSel = list.find((b) => !pm.has(b)) || list[0];
+    $("#pinSearch").value = [pinSel, MAP_AREA].filter(Boolean).join(", ");
+  }
+  const sel = $("#pinBar");
+  if (document.activeElement !== sel)
+    sel.innerHTML = list.map((b, i) => `<option value="${esc(b)}" ${b === pinSel ? "selected" : ""}>${pm.has(b) ? "📍" : "⚪️"} ${i + 1}. ${esc(b)}</option>`).join("");
+  $("#pinCount").textContent = `${list.filter((b) => pm.has(b)).length} of ${list.length} pinned`;
+  $("#unpinBtn").hidden = !pm.has(pinSel);
+  pinMap ||= createPinEditor($("#pinMap"), { onPlace: placePin });
+  pinMap.update({ bars: list, pins: pm, selected: pinSel });
 }
 
 function tick() {
@@ -698,6 +805,7 @@ function renderChicken() {
       <button class="icon-btn" data-action="unspend" data-i="${i}" aria-label="Remove">✕</button></li>`)
     .join("");
 
+  renderPins();
   const ed = $("#barsEditor");
   if (!barsDirty && document.activeElement !== ed) ed.value = bars().join("\n");
 
