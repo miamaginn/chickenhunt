@@ -7,8 +7,8 @@
 //    (see README → "Connect Supabase"). Both are safe to make public.
 //    While these are empty the site runs in DEMO MODE: everything is saved
 //    only on the current device, which is handy for trying it out.
-export const SUPABASE_URL = "";
-export const SUPABASE_KEY = "";
+export const SUPABASE_URL = "https://lvnrlogawkjpnlswtwss.supabase.co";
+export const SUPABASE_KEY = "sb_publishable_XNOxRgeh7tQgw5Mjsp2uiA_K8Owq4ev";
 
 //    (Alternative: Firebase. Only used if the Supabase settings are empty.)
 export const FIREBASE_CONFIG = {
