@@ -82,10 +82,10 @@ async function init() {
   try {
     store = await createStore();
   } catch (e) {
-    showFatal("Couldn't reach the coop 😿 Check your internet connection and the Firebase settings in config.js.", e);
+    showFatal("Couldn't reach the coop 😿 Check your internet connection and the database settings in config.js.", e);
     return;
   }
-  const onErr = (e) => showFatal("The coop's database said no 😿 Check your Firestore security rules (see README).", e);
+  const onErr = (e) => showFatal("The coop's database said no 😿 Did you run supabase.sql? (see README)", e);
   store.onGame((g) => { S.game = g || {}; S.loaded.game = true; onGameChange(); render(); }, onErr);
   store.onTeams((ts) => { S.teams = ts; S.loaded.teams = true; onTeamsChange(); render(); }, onErr);
   render();

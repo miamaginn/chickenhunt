@@ -3,9 +3,14 @@
 //  Edit this file (you can do it right on github.com with the ✏️ button).
 // ─────────────────────────────────────────────────────────────
 
-// 1) Paste your Firebase web config here (see README → "Connect Firebase").
-//    While apiKey is empty the site runs in DEMO MODE: everything is saved
+// 1) Paste your Supabase project URL and publishable/anon key here
+//    (see README → "Connect Supabase"). Both are safe to make public.
+//    While these are empty the site runs in DEMO MODE: everything is saved
 //    only on the current device, which is handy for trying it out.
+export const SUPABASE_URL = "";
+export const SUPABASE_KEY = "";
+
+//    (Alternative: Firebase. Only used if the Supabase settings are empty.)
 export const FIREBASE_CONFIG = {
   apiKey: "",
   authDomain: "",
@@ -25,21 +30,19 @@ export const GAME_ID = "birthday-hunt";
 //      { name: "The Rusty Rooster", lat: 30.2672, lng: -97.7431 },
 //    (In Google Maps, right-click a spot and click the numbers to copy them.)
 export const DEFAULT_BARS = [
-  "Bar #1",
-  "Bar #2",
-  "Bar #3",
-  "Bar #4",
-  "Bar #5",
-  "Bar #6",
-  "Bar #7",
-  "Bar #8",
-  "Bar #9",
-  "Bar #10",
+  "SoCal Vibes Co",
+  "Courtside Lounge",
+  "The Whaler",
+  "Big Dean's",
+  "Ye Olde King's Head",
+  "Barney's Beanery",
+  "Cabo Cantina",
+  "1212",
 ];
 
 // 4) Town or neighbourhood, added to map searches so "The Pub" finds the
 //    right one, e.g. "Austin, TX".
-export const MAP_AREA = "";
+export const MAP_AREA = "Santa Monica, CA";
 
 // 5) How much each person chips into the pot (used to suggest the pot size).
 export const POT_PER_PERSON = 20;

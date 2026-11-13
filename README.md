@@ -12,24 +12,38 @@ A cute, farm-themed dashboard for a birthday **Chicken Hunt** bar crawl.
 - The chickens have a passcode-locked **🐔 Chickens** tab: start the hunt, track the **pot** as drinks are bought
   (everyone sees how much is left), edit the bar list, drop map pins, see where every team has been, and fix mistakes.
 
-It's a plain static site (HTML/CSS/JS, no build step). Live data syncs through a free **Firebase Firestore** database.
+It's a plain static site (HTML/CSS/JS, no build step). Live data syncs through a free **Supabase** database
+(Firebase also works as an alternative).
 
 ---
 
-## 1. Connect Firebase (≈5 minutes, free)
+## 1. Connect Supabase (≈5 minutes, free)
 
-1. Go to <https://console.firebase.google.com> → **Add project** (any name, e.g. `chickenhunt`). Google Analytics isn't needed.
-2. In the project, open **Build → Firestore Database → Create database**. Pick a location near you and start in **production mode**.
-3. Open the **Rules** tab, replace everything with the contents of [`firestore.rules`](firestore.rules), and click **Publish**.
-4. Go to **Project settings** (⚙️) → **Your apps** → click the **`</>` Web** icon → register an app (no hosting needed).
-5. Copy the `firebaseConfig` values it shows into [`config.js`](config.js) (`apiKey`, `authDomain`, `projectId`, …).
-   These values are meant to be public, so it's fine to commit them.
+1. In <https://supabase.com/dashboard>, create a **New project** (any name, e.g. `chickenhunt`; save the database password somewhere, it isn't needed here).
+2. Open **SQL Editor → New query**, paste in all of [`supabase.sql`](supabase.sql), and click **Run**.
+   This creates three small tables (`ch_games`, `ch_teams`, `ch_visits`), turns on live updates, and adds the game's functions.
+3. Click **Connect** at the top of the project, or go to **Project Settings → API Keys**. Copy:
+   - the **Project URL** (looks like `https://abcdxyz.supabase.co`)
+   - the **publishable** key (`sb_publishable_…`) or the legacy **anon public** key. **Not** the secret/service_role key!
+4. Paste them into [`config.js`](config.js) as `SUPABASE_URL` and `SUPABASE_KEY`. Both are designed to be public, so it's fine to commit them.
 
-While `apiKey` is empty, the site runs in **demo mode**: everything is saved only on the current device, which is good for trying it out.
+⚠️ Free Supabase projects **pause after a week with no activity**. Open the site (or the dashboard) a day or two before the party
+so it's awake, and if it ever shows "paused", hit **Restore** in the dashboard.
+
+While the Supabase settings are empty, the site runs in **demo mode**: everything is saved only on the current device, which is good for trying it out.
+
+<details>
+<summary>Using Firebase instead</summary>
+
+1. <https://console.firebase.google.com> → **Add project**.
+2. **Build → Firestore Database → Create database** (production mode), then paste [`firestore.rules`](firestore.rules) into the **Rules** tab and **Publish**.
+3. **Project settings → Your apps → `</>` Web**, register an app, and copy the `firebaseConfig` values into `FIREBASE_CONFIG` in `config.js`.
+   Leave the Supabase settings empty.
+</details>
 
 ## 2. Put in your bars
 
-Edit `DEFAULT_BARS` in [`config.js`](config.js) with your 10 bars, and set `MAP_AREA` to your town (e.g. `"Austin, TX"`).
+Edit `DEFAULT_BARS` in [`config.js`](config.js) (already filled in with the Santa Monica list) and `MAP_AREA` (set to `"Santa Monica, CA"`).
 The chickens can also edit the list during the game from the 🐔 tab.
 
 **Map pins:** in the 🐔 tab → *Bar pins*, pick a bar, then search for it or tap the map to drop its pin
@@ -59,7 +73,7 @@ To play again later, use **Restart the hunt** in the 🐔 tab, or change `GAME_I
 
 - This is honour-system security for a party. The chicken passcode and the "you can't see other teams' bars"
   rule keep honest people honest, but someone determined could peek with browser dev tools.
-  The database rules are open, so delete the Firebase project (or the data) after the party.
+  The database is open to anyone with the site, so delete the Supabase project (or its `ch_` tables) after the party.
 - Times come from each phone's clock, which is accurate enough for a bar crawl.
 
 ## Files
@@ -68,7 +82,8 @@ To play again later, use **Restart the hunt** in the 🐔 tab, or change `GAME_I
 | --- | --- |
 | `index.html`, `styles.css`, `app.js` | The dashboard |
 | `map.js` | Maps (Leaflet + OpenStreetMap) |
-| `store.js` | Data layer (Firestore, or local demo mode) |
-| `config.js` | **Your settings:** Firebase keys, bar list, $ per person |
-| `firestore.rules` | Database rules to paste into Firebase |
+| `store.js` | Data layer (Supabase, Firebase, or local demo mode) |
+| `supabase.sql` | Database setup to run in Supabase |
+| `config.js` | **Your settings:** database keys, bar list, $ per person |
+| `firestore.rules` | Database rules (only if using Firebase) |
 | `sw.js`, `manifest.json`, `icon.svg` | Notifications + "Add to Home Screen" |
