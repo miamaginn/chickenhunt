@@ -1,8 +1,8 @@
-// Maps (Leaflet + free OpenStreetMap/CARTO tiles, no API key needed).
+// Maps (Leaflet + free OpenStreetMap tiles, no API key needed).
 // Leaflet is loaded as a global `L` by a <script> tag in index.html.
 
-const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -12,7 +12,7 @@ export const mapsAvailable = () => typeof window.L !== "undefined";
 
 function baseMap(el) {
   const map = L.map(el, { zoomControl: true, attributionControl: true }).setView([39.5, -98.35], 4);
-  L.tileLayer(TILES, { attribution: ATTR, subdomains: "abcd", maxZoom: 20 }).addTo(map);
+  L.tileLayer(TILES, { attribution: ATTR, maxZoom: 19 }).addTo(map);
   return map;
 }
 

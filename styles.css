@@ -321,6 +321,7 @@ textarea { resize: vertical; line-height: 1.4; margin-bottom: 10px; }
 .map-pop b { font-family: var(--head); font-size: 1rem; }
 .map-pop a { font-weight: 800; color: var(--red-dark); }
 .leaflet-container { font-family: var(--body); }
+.leaflet-tile-pane { filter: sepia(0.18) saturate(0.9) brightness(1.03); } /* warm, farmhouse-y map */
 .leaflet-popup-content-wrapper { border: 2.5px solid var(--brown); border-radius: 14px; }
 select {
   font: inherit; font-weight: 800; color: var(--brown); width: 100%; background: #fff;

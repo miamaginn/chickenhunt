@@ -63,7 +63,8 @@ function pins() {
 }
 let huntMap = null, pinMap = null, pinSel = null;
 const myTeam = () => S.teams.find((t) => t.id === S.myTeamId);
-const roosted = () => !!S.game.roostedAt;
+// How long after the roost something happened ("" if the chickens hadn't roosted yet).
+const roostGap = (at) => (S.game.roostedAt && at >= S.game.roostedAt ? durWords(at - S.game.roostedAt) : "");
 const chickenOk = () => !!S.game.chickenHash && LS.get("chickenHash") === S.game.chickenHash;
 const potLeft = () => (S.game.pot?.start || 0) - (S.game.spends || []).reduce((a, s) => a + (+s.amt || 0), 0);
 
@@ -128,12 +129,13 @@ function onGameChange() {
       key: "roost:" + g.roostedAt,
       emoji: "🐔🪺",
       title: "The chickens have roosted!",
-      body: "The hunt is ON. Go find them, and remember: one drink at every bar you check! 🍺",
+      body: "They've settled in at their secret bar and the timer is running. Keep hunting, and remember: one drink at every bar you check! 🍺",
       big: true,
     });
   if (g.winner) {
     const w = g.winner, mine = w.teamId === S.myTeamId;
-    const when = g.roostedAt ? `, ${durWords(w.at - g.roostedAt)} into the hunt` : "";
+    const gap = roostGap(w.at);
+    const when = gap ? `, ${gap} after the chickens roosted` : "";
     announce({
       key: `win:${w.teamId}:${w.at}`,
       emoji: "🏆",
@@ -390,7 +392,6 @@ function bindUI() {
     e.preventDefault();
     const t = myTeam(), bar = e.target.bar.value.trim();
     if (!t || !bar) return;
-    if (!roosted()) return toast("Hold your horses 🐴 the chickens haven't roosted yet!");
     await store.addVisit(t.id, bar);
     e.target.reset();
     toast(`Checked ${bar}. Bottoms up! 🍺`);
@@ -487,8 +488,7 @@ function bindUI() {
       case "edit-team": editTeam(); break;
       case "visit":
         if (!t) return;
-        if (!roosted()) return toast("Hold your horses 🐴 the chickens haven't roosted yet!");
-        el.disabled = true;
+            el.disabled = true;
         await store.addVisit(t.id, el.dataset.bar);
         toast(`Checked ${el.dataset.bar}. Bottoms up! 🍺`);
         break;
@@ -511,7 +511,7 @@ function bindUI() {
 
       // ── chickens ──
       case "roost":
-        if (await confirmBox("Roosted? 🪺", "This starts the timer and pings every hunter that the hunt is on!", "We've roosted! Start the hunt")) {
+        if (await confirmBox("Roosted? 🪺", "This starts the timer and pings every hunter that you've settled in!", "We've roosted! Start the hunt")) {
           await store.updateGame({ roostedAt: Date.now() });
         }
         break;
@@ -666,7 +666,8 @@ function renderBanner() {
   b.style.background = "";
   if (g.winner) {
     const w = g.winner;
-    const after = g.roostedAt ? ` (${durWords(w.at - g.roostedAt)} in)` : "";
+    const gap = roostGap(w.at);
+    const after = gap ? ` (${gap} after roosting)` : "";
     const pot = g.pot?.start ? ` · ${money(Math.max(0, potLeft()))} left in the pot` : "";
     b.className = "banner won";
     b.innerHTML = `<div class="b-emoji">🏆</div><div><div class="b-title">${esc(w.emoji || "")} ${esc(w.name)} found the chickens!</div>
@@ -677,8 +678,8 @@ function renderBanner() {
       <div class="b-sub">Roosted at ${clock(g.roostedAt)} · hunting for <b data-since="${g.roostedAt}">${dur(Date.now() - g.roostedAt)}</b></div></div>`;
   } else {
     b.className = "banner waiting";
-    b.innerHTML = `<div class="b-emoji">🪺</div><div><div class="b-title">The chickens are finding a roost…</div>
-      <div class="b-sub">Hang tight! The timer starts when they settle in. Keep this page open for the cluck. 🔊</div></div>`;
+    b.innerHTML = `<div class="b-emoji">🪺</div><div><div class="b-title">The chickens haven't roosted yet…</div>
+      <div class="b-sub">Once the hunt begins, start searching and log every bar you check. The timer starts when the chickens settle in. 🔊</div></div>`;
   }
 }
 
@@ -706,28 +707,25 @@ function renderTeam() {
   const byBar = new Map();
   S.myVisits.forEach((v) => !byBar.has(v.bar) && byBar.set(v.bar, v));
   const extras = S.myVisits.filter((v) => !list.includes(v.bar));
-  const can = roosted();
   const row = (name, v, n) => `<li class="bar ${v ? "visited" : ""}">
       <span class="bar-num">${v ? "✓" : n}</span><span class="bar-name">${esc(name)}</span>
       ${v
         ? `<span class="stamp">${clock(v.at)}</span><button class="icon-btn" data-action="unvisit" data-id="${v.id}" title="Undo" aria-label="Undo">↩︎</button>`
-        : `<button class="btn btn-small" data-action="visit" data-bar="${esc(name)}" ${can ? "" : "disabled"}>🍺 We're here</button>`}
+        : `<button class="btn btn-small" data-action="visit" data-bar="${esc(name)}">🍺 We're here</button>`}
     </li>`;
   $("#barList").innerHTML = list.map((b, i) => row(b, byBar.get(b), i + 1)).join("") + extras.map((v) => row(v.bar, v, "★")).join("");
   $("#barProgress").textContent = `${S.myVisits.length} of ${list.length} checked`;
-  $("#customBarForm").hidden = !can;
 
   let found;
   if (t.foundAt) {
     const won = S.game.winner?.teamId === t.id;
-    const after = S.game.roostedAt ? ` after ${durWords(t.foundAt - S.game.roostedAt)} of hunting` : "";
+    const gap = roostGap(t.foundAt);
+    const after = gap ? ` (${gap} after the chickens roosted)` : S.game.roostedAt ? "" : " (before they even roosted! 😱)";
     found = `<div class="card found-card done"><div class="big">${won ? "🏆" : "🐔"}</div>
       <h2>${won ? "You found the chickens first!" : `You were the ${ordinal(t.findRank)} team to find the chickens!`}</h2>
       <p>Found at ${clock(t.foundAt)}${after}, ${plural(t.barCount || 0, "bar")} in. ${won ? "Drinks are on the pot! 🍻" : "Grab a drink before the pot runs out! 🍻"}</p></div>`;
-  } else if (can) {
-    found = `<button class="btn btn-huge" data-action="found">🐔 WE FOUND THE CHICKENS!</button>`;
   } else {
-    found = `<div class="card found-card"><div class="big">🪺</div><p><b>The chickens haven't roosted yet.</b><br/>Once they do, the timer starts and you can start checking bars.</p></div>`;
+    found = `<button class="btn btn-huge" data-action="found">🐔 WE FOUND THE CHICKENS!</button>`;
   }
   $("#foundArea").innerHTML = found;
 }
@@ -745,7 +743,7 @@ function renderCoop() {
   const g = S.game;
   $("#winnerCard").innerHTML = g.winner
     ? `<div class="card winner-card"><div class="trophy">🏆</div><h2>${esc(g.winner.emoji || "")} ${esc(g.winner.name)}</h2>
-       <p>Found the chickens at <b>${clock(g.winner.at)}</b>${g.roostedAt ? `, <b>${durWords(g.winner.at - g.roostedAt)}</b> after they roosted` : ""}.</p></div>`
+       <p>Found the chickens at <b>${clock(g.winner.at)}</b>${roostGap(g.winner.at) ? `, <b>${roostGap(g.winner.at)}</b> after they roosted` : ""}.</p></div>`
     : "";
   const pc = potCard();
   $("#potCard").innerHTML = pc ? `<div class="card">${pc}</div>` : "";
@@ -818,7 +816,7 @@ function renderChicken() {
           ${vs.length ? `<ul>${vs.map((v) => `<li>${esc(v.bar)} <span class="muted">${clock(v.at)}</span></li>`).join("")}</ul>` : `<p class="hint">No bars yet.</p>`}
           <div class="actions">${t.foundAt
             ? `<span class="muted">Found ${clock(t.foundAt)} (${ordinal(t.findRank)})</span><button class="btn btn-small" data-action="chick-unfind" data-id="${t.id}">Undo find</button>`
-            : `<button class="btn btn-small" data-action="chick-find" data-id="${t.id}" ${g.roostedAt ? "" : "disabled"}>They found us!</button>`}
+            : `<button class="btn btn-small" data-action="chick-find" data-id="${t.id}">They found us!</button>`}
           <button class="btn btn-small btn-danger" data-action="chick-del" data-id="${t.id}">Delete</button></div></div>`;
       }).join("")
     : `<p class="empty">No teams yet.</p>`;
